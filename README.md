@@ -30,29 +30,6 @@ go install github.com/litesql/pocketbase-hc@latest
 docker pull ghcr.io/litesql/pocketbase-hc:latest
 ```
 
-### Install from helm
-
-- Add [litesql helm charts repository](https://litesql.github.io/helm-charts) to Helm:
-
-```sh
-helm repo add litesql https://litesql.github.io/helm-charts
-```
-
-- Update the chart repository:
-
-```sh
-helm repo update
-```
-
-- Deploy ha to kubernetes:
-
-```sh
-helm install pb litesql/pocketbase-hc
-```
-
-- Visit [litesql helm charts repository](https://litesql.github.io/helm-charts) to customize the installation;
-
-
 ## Configuration
 
 Set up your environment variables to configure the cluster:
