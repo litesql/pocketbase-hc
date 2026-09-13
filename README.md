@@ -64,9 +64,9 @@ Set up your environment variables to configure the cluster:
 
 > **Note**: You can skip setting the superuser password for the peer1 instance.
 
-### Running a NATS Cluster with docker
+### Running a Cluster with docker
 
-To run a NATS cluster using Docker Compose, use the following command:
+To run a pocketbase-hc cluster using Docker Compose, use the following command:
 
 ```sh
 docker compose up

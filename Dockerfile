@@ -33,6 +33,4 @@ EXPOSE 4222 6222 8090
 
 USER ha
 
-ENV PB_NATS_STORE_DIR="/app/pb_data"
-
 ENTRYPOINT ["/app/entrypoint.sh"]
