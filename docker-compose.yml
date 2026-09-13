@@ -1,0 +1,49 @@
+services:
+  node1:
+    image: ghcr.io/litesql/pocketbase-hc:latest
+    volumes:
+      - node1_data:/app/pb_data
+    restart: on-failure
+    ports:
+      - "8090:8090"
+      - "9090:9090"
+    environment:
+      - PB_NAME=node1
+      - PB_PEERS=http://node2:9090,http://node3:9090
+      - PB_SUPERUSER_EMAIL=test@example.com
+      - PB_SUPERUSER_PASS=1234567890
+      - PB_GRPC_PORT=9090
+
+  node2:
+    image: ghcr.io/litesql/pocketbase-hc:latest
+    volumes:
+      - node2_data:/app/pb_data
+    restart: on-failure
+    ports:      
+      - "8091:8090"
+      - "9091:9090"
+    environment:
+      - PB_NAME=node2      
+      - PB_STATIC_LEADER=http://node1:8090
+      - PB_GRPC_PORT=9090
+
+  node3:
+    image: ghcr.io/litesql/pocketbase-hc:latest
+    volumes:
+      - node3_data:/app/pb_data
+    restart: on-failure
+    ports:
+      - "8092:8090"
+      - "9092:9090"
+    environment:
+      - PB_NAME=node3
+      - PB_STATIC_LEADER=http://node1:8090
+      - PB_GRPC_PORT=9090
+
+volumes:
+  node1_data:
+    driver: local
+  node2_data:
+    driver: local
+  node3_data:
+    driver: local
