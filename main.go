@@ -71,7 +71,17 @@ func init() {
 			worker, key, _ := strings.Cut(peer, "=")
 			twoPhaseCommitWorkers[worker] = key
 		}
-		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, 60*time.Second)
+		recovery2pcPath := os.Getenv("PB_2PC_RECOVERY_PATH")
+		if recovery2pcPath == "" {
+			recovery2pcPath = "pb_data"
+		}
+		os.MkdirAll(recovery2pcPath, os.ModePerm)
+		recovery2pcDB, err := sql.Open(dbDriver, fmt.Sprintf("file:%s", filepath.Join(recovery2pcPath, "2pc_recovery.db")))
+		if err != nil {
+			panic("failed to start 2pc recovery database: " + err.Error())
+		}
+
+		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, 60*time.Second, recovery2pcDB)
 		if err != nil {
 			panic(err)
 		}

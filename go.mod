@@ -3,7 +3,7 @@ module github.com/litesql/pocketbase-hc
 go 1.27
 
 require (
-	github.com/litesql/go-ha v0.12.2
+	github.com/litesql/go-ha v0.12.3
 	github.com/litesql/go-sqlite-ha v0.12.0
 	github.com/litesql/go-sqlite3 v1.14.53
 	github.com/litesql/go-sqlite3-ha v0.12.0
@@ -12,6 +12,8 @@ require (
 	github.com/pocketbase/pocketbase v0.40.4
 	modernc.org/sqlite v1.58.0
 )
+
+replace github.com/litesql/go-ha => ../go-ha
 
 require (
 	connectrpc.com/connect v1.21.0 // indirect
@@ -75,7 +77,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/xo/terminfo v1.1.0 // indirect
+	github.com/xo/terminfo v1.2.0 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/image v0.46.0 // indirect
 	golang.org/x/net v0.59.0 // indirect

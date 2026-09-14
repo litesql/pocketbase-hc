@@ -21,3 +21,5 @@ var drv = sqlite3ha.Driver{
 		return err
 	},
 }
+
+const dbDriver = "sqlite3-ha"
