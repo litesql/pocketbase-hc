@@ -13,8 +13,6 @@ require (
 	modernc.org/sqlite v1.58.0
 )
 
-replace github.com/litesql/go-ha => ../go-ha
-
 require (
 	connectrpc.com/connect v1.21.0 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.8.0 // indirect
