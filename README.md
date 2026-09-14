@@ -1,9 +1,9 @@
-# PocketBase HC (experimental)
+# PocketBase HC
 Highly Consistent [PocketBase](https://pocketbase.io/) Cluster powered by `go-ha` [database/sql driver](https://github.com/litesql/go-ha).
 
 ## Features
 
-- **High Consistency**: Run multiple PocketBase instances.
+- **High Consistency**: Run multiple PocketBase instances with transactional consistency.
 - **Replication**: Synchronize data across nodes via gRPC.
 - **Remote direct access to Database**: via a secured gRPC endpoint for direct database access from remote clients. Use [terminal](#remote-database-access-from-terminal) or [DBeaver](https://github.com/litesql/jdbc-ha#dbeaver-integration).
 - **Undo transactions**: Use `pocketbase-hc cli` (or any gRPC client) to execute [UNDO](#undo-transactions) commands on already commited transactions. 
@@ -99,6 +99,26 @@ On replica nodes (the nodes that users do not directly interact with), only the 
 - OnModelAfterUpdateError
 - OnModelAfterDeleteSuccess
 - OnModelAfterDeleteError
+
+### Data Replication
+
+**PocketBase HC** uses a two-phase commit strategy for handling transactions.
+
+For applications that require higher availability, consider using [PocketBase HA](https://github.com/litesql/pocketbase-ha).
+
+### Configuring a Cluster Leader
+
+Set `PB_STATIC_LEADER` environment variables to designate a leader node that processes all write requests:
+
+#### Static Leader
+
+```sh
+export PB_STATIC_LEADER=http://leader-addr:8090
+```
+
+This ensures all mutations route through the leader while reads can be distributed across replica nodes.
+
+![write-path](./img/leader_write.png)
 
 ### Remote database access from terminal
 
