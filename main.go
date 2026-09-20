@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"log"
 	"log/slog"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,6 +15,7 @@ import (
 	"time"
 
 	"github.com/litesql/go-ha"
+	sqlv1 "github.com/litesql/go-ha/api/sql/v1"
 	"github.com/litesql/pocketbase-ha/remote"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
@@ -22,11 +25,15 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/jsvm"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/pocketbase/pocketbase/tools/osutils"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
-	bootstrap   = make(chan struct{})
-	interceptor = new(ChangeSetInterceptor)
+	bootstrap             = make(chan struct{})
+	interceptor           = new(ChangeSetInterceptor)
+	twoPhaseCommitWorkers = make(map[string]string)
 )
 
 func init() {
@@ -66,7 +73,6 @@ func init() {
 	}
 
 	if peers := os.Getenv("PB_PEERS"); peers != "" {
-		twoPhaseCommitWorkers := make(map[string]string)
 		for peer := range strings.SplitSeq(peers, ",") {
 			worker, key, _ := strings.Cut(peer, "=")
 			twoPhaseCommitWorkers[worker] = key
@@ -193,6 +199,28 @@ func main() {
 	remote.Register(app.RootCmd)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		if len(twoPhaseCommitWorkers) > 0 {
+			timeout := 60 * time.Second
+			if checkPeersTimeout := os.Getenv("PB_CHECK_PEERS_TIMEOUT"); checkPeersTimeout != "" {
+				var err error
+				timeout, err = time.ParseDuration(checkPeersTimeout)
+				if err != nil {
+					return fmt.Errorf("invalid PB_CHECK_PEERS_TIMEOUT: %w", err)
+				}
+			}
+			chErr := make(chan error, len(twoPhaseCommitWorkers))
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			for remote, token := range twoPhaseCommitWorkers {
+				go checkPeerConn(ctx, remote, token, chErr)
+			}
+			for range len(twoPhaseCommitWorkers) {
+				err := <-chErr
+				if err != nil {
+					return err
+				}
+			}
+		}
 		close(bootstrap)
 
 		var dataDSN string
@@ -406,4 +434,81 @@ func defaultPublicDir() string {
 	}
 
 	return filepath.Join(os.Args[0], "../pb_public")
+}
+
+func checkPeerConn(ctx context.Context, remote, token string, chErr chan error) {
+	u, err := url.Parse(remote)
+	if err != nil {
+		slog.Error("parse url", "error", err)
+		chErr <- fmt.Errorf("invalid PB_PEERS: %w", err)
+	}
+
+	var dialOpts []grpc.DialOption
+
+	if strings.HasPrefix(remote, "http://") {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+	}
+	if token != "" {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(grpcCredentials{token: token}))
+	}
+
+	cc, err := grpc.NewClient(u.Host, dialOpts...)
+	if err != nil {
+		slog.Error("grpc connect", "error", err)
+		chErr <- err
+		return
+	}
+	defer cc.Close()
+
+	for {
+		select {
+		case <-ctx.Done():
+			chErr <- ctx.Err()
+			return
+		case <-time.Tick(1 * time.Second):
+			slog.Info("checking peer", "remote", remote)
+			client, err := sqlv1.NewDatabaseServiceClient(cc).ChangeSet(ctx)
+			if err != nil {
+				continue
+			}
+			defer client.CloseSend()
+
+			err = client.Send(&sqlv1.ChangeSetRequest{
+				Type: sqlv1.CangeSetRequestType_CHANGESET_REQUEST_TYPE_PING,
+			})
+			if err != nil {
+				chErr <- err
+				return
+			}
+
+			resp, err := client.Recv()
+			if err != nil {
+				chErr <- err
+				return
+			}
+
+			if resp.Error != "" {
+				chErr <- fmt.Errorf("ping error: %w", err)
+				return
+			}
+
+			chErr <- nil
+		}
+	}
+}
+
+type grpcCredentials struct {
+	token string
+}
+
+func (c grpcCredentials) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": c.token,
+	}, nil
+}
+
+func (c grpcCredentials) RequireTransportSecurity() bool {
+	return false
 }
