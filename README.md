@@ -36,6 +36,7 @@ Set up your environment variables to configure the cluster:
 
 | Environment Variable | Description                                                                 | Default |
 |----------------------|-----------------------------------------------------------------------------|---------|
+| `PB_2PC_TIMEOUT`       | Two-phase commit timeout.             | 10s        |
 | `PB_GRPC_PORT`       | TCP Port for the gRPC service to enable remote database access.             |         |
 | `PB_GRPC_TOKEN`      | Authentication token for securing remote database access via gRPC.          |         |
 | `PB_NAME`            | A unique name for the node. Defaults to the system's hostname if not provided. | $HOSTNAME |

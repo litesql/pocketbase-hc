@@ -41,6 +41,7 @@ func init() {
 		ha.WithName(os.Getenv("PB_NAME")),
 		ha.WithWaitFor(bootstrap),
 		ha.WithChangeSetInterceptor(interceptor),
+		ha.WithForcePublishBeforeStart(false),
 	}
 
 	rowIdentify := os.Getenv("PB_ROW_IDENTIFY")
@@ -87,7 +88,15 @@ func init() {
 			panic("failed to start 2pc recovery database: " + err.Error())
 		}
 
-		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, 60*time.Second, recovery2pcDB)
+		timeout2pc := 10 * time.Second
+		if v := os.Getenv("PB_2PC_TIMEOUT"); v != "" {
+			timeout2pc, err = time.ParseDuration(v)
+			if err != nil {
+				panic("invalid PB_2PC_TIMEOUT: " + err.Error())
+			}
+		}
+
+		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, timeout2pc, recovery2pcDB)
 		if err != nil {
 			panic(err)
 		}
