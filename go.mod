@@ -3,10 +3,10 @@ module github.com/litesql/pocketbase-hc
 go 1.27
 
 require (
-	github.com/litesql/go-ha v0.13.3
-	github.com/litesql/go-sqlite-ha v0.13.2
+	github.com/litesql/go-ha v0.13.6
+	github.com/litesql/go-sqlite-ha v0.13.4
 	github.com/litesql/go-sqlite3 v1.14.53
-	github.com/litesql/go-sqlite3-ha v0.13.2
+	github.com/litesql/go-sqlite3-ha v0.13.4
 	github.com/litesql/pocketbase-ha v0.13.4
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.40.4
@@ -33,7 +33,7 @@ require (
 	github.com/dlclark/regexp2/v2 v2.8.0 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
 	github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217 // indirect
-	github.com/dop251/goja v0.0.0-20260917113740-793a2a65c13b // indirect
+	github.com/dop251/goja v0.0.0-20260926152631-39ec2650adc9 // indirect
 	github.com/dop251/goja_nodejs v0.0.0-20260918173711-b481721df8a2 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
@@ -45,11 +45,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
-	github.com/google/pprof v0.0.0-20260906184651-6331bc6350fe // indirect
+	github.com/google/pprof v0.0.0-20260926063103-aaccee046517 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.20.0 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/knz/bubbline v0.0.0-20251201090646-433e881e9884 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect

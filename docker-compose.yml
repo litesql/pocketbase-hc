@@ -9,10 +9,11 @@ services:
       - "9090:9090"
     environment:
       - PB_NAME=node1
-      - PB_PEERS=http://node2:9090,http://node3:9090
+      - PB_PEERS=http://node2:9090=secret-key,http://node3:9090=secret3
+      - PB_GRPC_PORT=9090
+      - PB_GRPC_TOKEN=secret
       - PB_SUPERUSER_EMAIL=test@example.com
       - PB_SUPERUSER_PASS=1234567890
-      - PB_GRPC_PORT=9090
 
   node2:
     image: ghcr.io/litesql/pocketbase-hc:latest
@@ -24,8 +25,9 @@ services:
       - "9091:9090"
     environment:
       - PB_NAME=node2      
-      - PB_STATIC_LEADER=http://node1:8090
+      - PB_PEERS=http://node1:9090=secret,http://node3:9090=secret3
       - PB_GRPC_PORT=9090
+      - PB_GRPC_TOKEN=secret-key
 
   node3:
     image: ghcr.io/litesql/pocketbase-hc:latest
@@ -37,8 +39,9 @@ services:
       - "9092:9090"
     environment:
       - PB_NAME=node3
-      - PB_STATIC_LEADER=http://node1:8090
+      - PB_PEERS=http://node1:9090=secret,http://node2:9090=secret-key
       - PB_GRPC_PORT=9090
+      - PB_GRPC_TOKEN=secret3
 
 volumes:
   node1_data:

@@ -1,24 +1,21 @@
 # PocketBase HC
-Highly Consistent [PocketBase](https://pocketbase.io/) Cluster powered by `go-ha` [database/sql driver](https://github.com/litesql/go-ha).
+
+PocketBase HC runs [PocketBase](https://pocketbase.io/) as a highly consistent cluster. It uses the [`go-ha`](https://github.com/litesql/go-ha) `database/sql` driver to replicate database changes between nodes over gRPC.
 
 ## Features
 
-- **High Consistency**: Run multiple PocketBase instances with transactional consistency.
-- **Replication**: Synchronize data across nodes via gRPC.
-- **Remote direct access to Database**: via a secured gRPC endpoint for direct database access from remote clients. Use [terminal](#remote-database-access-from-terminal) or [DBeaver](https://github.com/litesql/jdbc-ha#dbeaver-integration).
-- **Undo transactions**: Use `pocketbase-hc cli` (or any gRPC client) to execute [UNDO](#undo-transactions) commands on already commited transactions. 
+- Transactionally consistent replication between PocketBase nodes.
+- Remote SQL access through an optional, authenticated gRPC endpoint.
+- Transaction history and the ability to undo committed transactions.
+- Compatibility with terminal clients and [DBeaver](https://github.com/litesql/jdbc-ha#dbeaver-integration).
 
-## Prerequisites
+## Requirements
 
-- **Go**: Version `1.27` or later is required.
+- Go `1.27` or later when building from source.
 
 ## Installation
 
-Download from [releases page](https://github.com/litesql/pocketbase-hc/releases/latest/).
-
-### Install from source
-
-Install the latest version of `pocketbase-hc` using:
+Download a binary from the [latest release](https://github.com/litesql/pocketbase-hc/releases/latest/), install from source, or use the Docker image:
 
 ```sh
 go install github.com/litesql/pocketbase-hc@latest
@@ -32,20 +29,19 @@ docker pull ghcr.io/litesql/pocketbase-hc:latest
 
 ## Configuration
 
-Set up your environment variables to configure the cluster:
+Configure each node with environment variables:
 
-| Environment Variable | Description                                                                 | Default |
-|----------------------|-----------------------------------------------------------------------------|---------|
-| `PB_2PC_TIMEOUT`       | Two-phase commit timeout.             | 10s        |
-| `PB_GRPC_PORT`       | TCP Port for the gRPC service to enable remote database access.             |         |
-| `PB_GRPC_TOKEN`      | Authentication token for securing remote database access via gRPC.          |         |
-| `PB_NAME`            | A unique name for the node. Defaults to the system's hostname if not provided. | $HOSTNAME |
-| `PB_PEERS`           | Comma-separated list of peers to replicate data to                          |         |
-| `PB_ROW_IDENTIFY`    | Strategy used to identify rows during replication. Options: `pk`, `rowid` or `full`. | pk |
-| `PB_STATIC_LEADER`   | URL target to redirect all writer requests to the cluster leader            |         |
-| `PB_SUPERUSER_EMAIL` | Superuser email created at startup                                          |         |
-| `PB_SUPERUSER_PASS`  | Superuser password created at startup                                       |         |
+| Variable | Description | Default |
+| --- | --- | --- |
+| `PB_NAME` | Unique node name. | System hostname (`$HOSTNAME`) |
+| `PB_PEERS` | Comma-separated gRPC URLs of the other nodes to replicate to. | Empty |
+| `PB_2PC_TIMEOUT` | Two-phase commit timeout. | `10s` |
+| `PB_GRPC_PORT` | Port for the gRPC service and remote database access. | Disabled |
+| `PB_GRPC_TOKEN` | Token required for remote gRPC access. | No authentication |
+| `PB_SUPERUSER_EMAIL` | Email for a superuser created at startup. | Empty |
+| `PB_SUPERUSER_PASS` | Password for a superuser created at startup. | Empty |
 
+Use the gRPC port of each node in `PB_PEERS`. For example, `PB_PEERS=http://localhost:9091`.
 
 ## Usage
 
@@ -54,13 +50,14 @@ Set up your environment variables to configure the cluster:
 1. Start the first PocketBase HA instance:
 
     ```sh
-    PB_NAME=peer1 PB_STATIC_LEADER=http://localhost:8090 PB_GRPC_PORT=9091 pocketbase-hc serve --http 127.0.0.1:8091
-    ```
+    PB_NAME=peer1 PB_PEERS=http://localhost:9091 PB_GRPC_PORT=9090 pocketbase-hc serve
+    
+    ```    
 
-2. Start a leader instance in a different directory:
+2. Start a second instance in a different directory:
 
     ```sh
-    PB_NAME=leader PB_PEERS=http://localhost:9091 pocketbase-hc serve
+    PB_NAME=peer2 PB_PEERS=http://localhost:9090 PB_GRPC_PORT=9091 pocketbase-hc serve --http 127.0.0.1:8091
     ```
 
 > **Note**: You can skip setting the superuser password for the peer1 instance.
@@ -107,54 +104,27 @@ On replica nodes (the nodes that users do not directly interact with), only the 
 
 For applications that require higher availability, consider using [PocketBase HA](https://github.com/litesql/pocketbase-ha).
 
-### Configuring a Cluster Leader
+## Remote database access
 
-Set `PB_STATIC_LEADER` environment variables to designate a leader node that processes all write requests:
-
-#### Static Leader
+Enable the gRPC endpoint and connect from another terminal:
 
 ```sh
-export PB_STATIC_LEADER=http://leader-addr:8090
-```
-
-This ensures all mutations route through the leader while reads can be distributed across replica nodes.
-
-![write-path](./img/leader_write.png)
-
-### Remote database access from terminal
-
-To enable remote access, set `PB_GRPC_PORT` before starting the service:
-
-```sh
-export PB_GRPC_PORT=9090
-pocketbase-hc serve
-```
-
-Then, from another terminal, connect with:
-
-```sh
+PB_GRPC_PORT=9090 pocketbase-hc serve
 pocketbase-hc remote http://localhost:9090
 ```
 
-Then execute any SQL command:
+The client accepts SQL commands, for example:
 
-```sh
+```text
 data.db> SELECT * FROM PRAGMA_table_list;
 ```
 
-#### Protect the connection with a token
+### Authentication
 
-Set `PB_GRPC_TOKEN` to require authentication for remote gRPC access.
-
-```sh
-export PB_GRPC_PORT=9090
-export PB_GRPC_TOKEN=secret
-pocketbase-hc serve
-```
-
-Then, from another terminal, connect with:
+Set `PB_GRPC_TOKEN` on the server and pass the same token to the client:
 
 ```sh
+PB_GRPC_PORT=9090 PB_GRPC_TOKEN=secret pocketbase-hc serve
 pocketbase-hc remote http://localhost:9090 --token secret
 ```
 

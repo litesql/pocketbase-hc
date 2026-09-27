@@ -19,7 +19,6 @@ import (
 	"github.com/litesql/pocketbase-ha/remote"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
-	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/ghupdate"
 	"github.com/pocketbase/pocketbase/plugins/jsvm"
@@ -44,24 +43,6 @@ func init() {
 		ha.WithForcePublishBeforeStart(false),
 	}
 
-	rowIdentify := os.Getenv("PB_ROW_IDENTIFY")
-	if rowIdentify != "" {
-		switch rowIdentify {
-		case string(ha.PK):
-			drv.Options = append(drv.Options, ha.WithRowIdentify(ha.PK))
-		case string(ha.Rowid):
-			drv.Options = append(drv.Options, ha.WithRowIdentify(ha.Rowid))
-		case string(ha.Full):
-			drv.Options = append(drv.Options, ha.WithRowIdentify(ha.Full))
-		default:
-			panic("invaid PB_ROW_IDENTIFY: " + rowIdentify)
-		}
-	}
-	if leader := os.Getenv("PB_STATIC_LEADER"); leader != "" {
-		drv.Options = append(drv.Options, ha.WithLeaderProvider(&ha.StaticLeader{
-			Target: leader,
-		}))
-	}
 	if grpcPort := os.Getenv("PB_GRPC_PORT"); grpcPort != "" {
 		port, err := strconv.Atoi(grpcPort)
 		if err != nil {
@@ -114,6 +95,7 @@ func init() {
 }
 
 func main() {
+
 	app := pocketbase.NewWithConfig(pocketbase.Config{
 		DBConnect: func(dbPath string) (*dbx.DB, error) {
 			return dbx.Open("pb_hc", dbPath)
@@ -232,31 +214,6 @@ func main() {
 		}
 		close(bootstrap)
 
-		var dataDSN string
-		for _, dsn := range ha.ListDSN() {
-			if strings.HasSuffix(dsn, "data.db") {
-				dataDSN = dsn
-				break
-			}
-		}
-
-		connector, ok := ha.LookupConnector(dataDSN)
-		if !ok {
-			return fmt.Errorf("connector not found")
-		}
-		slog.Info("waiting for the leader")
-		<-connector.LeaderProvider().Ready()
-
-		if connector.LeaderProvider().IsLeader() {
-			// force sync token definition
-			_, err := app.ConcurrentDB().Update("_collections",
-				dbx.Params{"updated": time.Now().Format("2006-01-02 15:04:05.000Z")},
-				dbx.In("name", "_superusers", "users")).Execute()
-			if err != nil {
-				return fmt.Errorf("failed to sync configure: %w", err)
-			}
-		}
-
 		superuserEmail := os.Getenv("PB_SUPERUSER_EMAIL")
 		superuserPass := os.Getenv("PB_SUPERUSER_PASS")
 		if superuserEmail != "" && superuserPass != "" {
@@ -279,8 +236,6 @@ func main() {
 			}
 		}
 
-		timeout := 10 * time.Second
-		se.Router.BindFunc(apis.WrapStdMiddleware(connector.ForwardToLeader(timeout, "POST", "PUT", "PATCH", "DELETE")))
 		return se.Next()
 	})
 
