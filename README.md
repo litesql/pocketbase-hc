@@ -51,7 +51,6 @@ Use the gRPC port of each node in `PB_PEERS`. For example, `PB_PEERS=http://loca
 
     ```sh
     PB_NAME=peer1 PB_PEERS=http://localhost:9091 PB_GRPC_PORT=9090 pocketbase-hc serve
-    
     ```    
 
 2. Start a second instance in a different directory:

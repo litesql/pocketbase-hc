@@ -59,25 +59,17 @@ func init() {
 			worker, key, _ := strings.Cut(peer, "=")
 			twoPhaseCommitWorkers[worker] = key
 		}
-		recovery2pcPath := os.Getenv("PB_2PC_RECOVERY_PATH")
-		if recovery2pcPath == "" {
-			recovery2pcPath = "pb_data"
-		}
-		os.MkdirAll(recovery2pcPath, os.ModePerm)
-		recovery2pcDB, err := sql.Open(dbDriver, fmt.Sprintf("file:%s", filepath.Join(recovery2pcPath, "2pc_recovery.db")))
-		if err != nil {
-			panic("failed to start 2pc recovery database: " + err.Error())
-		}
 
 		timeout2pc := 10 * time.Second
 		if v := os.Getenv("PB_2PC_TIMEOUT"); v != "" {
+			var err error
 			timeout2pc, err = time.ParseDuration(v)
 			if err != nil {
 				panic("invalid PB_2PC_TIMEOUT: " + err.Error())
 			}
 		}
 
-		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, timeout2pc, recovery2pcDB)
+		pub, err := ha.NewTwoPhaseCommitPublisher(twoPhaseCommitWorkers, timeout2pc)
 		if err != nil {
 			panic(err)
 		}
@@ -190,14 +182,11 @@ func main() {
 	remote.Register(app.RootCmd)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		if len(twoPhaseCommitWorkers) > 0 {
-			timeout := 60 * time.Second
-			if checkPeersTimeout := os.Getenv("PB_CHECK_PEERS_TIMEOUT"); checkPeersTimeout != "" {
-				var err error
-				timeout, err = time.ParseDuration(checkPeersTimeout)
-				if err != nil {
-					return fmt.Errorf("invalid PB_CHECK_PEERS_TIMEOUT: %w", err)
-				}
+
+		if checkPeersTimeout := os.Getenv("PB_CHECK_PEERS_TIMEOUT"); checkPeersTimeout != "" {
+			timeout, err := time.ParseDuration(checkPeersTimeout)
+			if err != nil {
+				return fmt.Errorf("invalid PB_CHECK_PEERS_TIMEOUT: %w", err)
 			}
 			chErr := make(chan error, len(twoPhaseCommitWorkers))
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)

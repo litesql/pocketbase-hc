@@ -3,15 +3,15 @@ module github.com/litesql/pocketbase-hc
 go 1.27
 
 require (
-	github.com/litesql/go-ha v0.13.13
-	github.com/litesql/go-sqlite-ha v0.13.5
+	github.com/litesql/go-ha v0.13.18
+	github.com/litesql/go-sqlite-ha v0.13.9
 	github.com/litesql/go-sqlite3 v1.14.53
-	github.com/litesql/go-sqlite3-ha v0.13.5
+	github.com/litesql/go-sqlite3-ha v0.13.9
 	github.com/litesql/pocketbase-ha v0.13.4
 	github.com/pocketbase/dbx v1.12.0
 	github.com/pocketbase/pocketbase v0.40.4
 	google.golang.org/grpc v1.84.0
-	modernc.org/sqlite v1.60.0
+	modernc.org/sqlite v1.60.1
 )
 
 require (
@@ -33,7 +33,7 @@ require (
 	github.com/dlclark/regexp2/v2 v2.8.0 // indirect
 	github.com/domodwyer/mailyak/v3 v3.6.2 // indirect
 	github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217 // indirect
-	github.com/dop251/goja v0.0.0-20260926152631-39ec2650adc9 // indirect
+	github.com/dop251/goja v0.0.0-20260930195847-0f92c903ca4a // indirect
 	github.com/dop251/goja_nodejs v0.0.0-20260918173711-b481721df8a2 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/nats-io/nats.go v1.54.0 // indirect
 	github.com/nats-io/nkeys v0.4.16 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
-	github.com/ncruces/go-strftime v1.0.0 // indirect
+	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/pocketbase/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
