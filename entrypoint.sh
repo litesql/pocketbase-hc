@@ -2,4 +2,4 @@
 
 set -e
 
-exec /app/pocketbase-hc serve --http 0.0.0.0:8090
+exec /app/pocketbase-hc serve --http 0.0.0.0:8090 "$0"
