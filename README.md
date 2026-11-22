@@ -38,6 +38,7 @@ Configure each node with environment variables:
 | `PB_2PC_TIMEOUT` | Two-phase commit timeout. | `10s` |
 | `PB_GRPC_PORT` | Port for the gRPC service and remote database access. | Disabled |
 | `PB_GRPC_TOKEN` | Token required for remote gRPC access. | No authentication |
+| `PB_METADATA_RETENTION` | Retention duration for internal metadata compaction | 72h |
 | `PB_SUPERUSER_EMAIL` | Email for a superuser created at startup. | Empty |
 | `PB_SUPERUSER_PASS` | Password for a superuser created at startup. | Empty |
 

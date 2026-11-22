@@ -79,6 +79,16 @@ func init() {
 		drv.Options = append(drv.Options, ha.WithReplicationPublisher(ha.NewNoopPublisher()))
 	}
 
+	if metadataRetention := os.Getenv("PB_METADATA_RETENTION"); metadataRetention != "" {
+		duration, err := time.ParseDuration(metadataRetention)
+		if err != nil {
+			panic("invalid PB_METADATA_RETENTION: " + err.Error())
+		}
+		drv.Options = append(drv.Options, ha.WithMetadataRetention(duration))
+	} else {
+		drv.Options = append(drv.Options, ha.WithMetadataRetention(72*time.Hour))
+	}
+
 	drv.Options = append(drv.Options, ha.WithReplicationSubscriber(ha.NewNoopSubscriber()))
 
 	sql.Register("pb_hc", &drv)
